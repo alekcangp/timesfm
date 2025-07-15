@@ -323,7 +323,7 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                 state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'buy', round(current_price, 2), round(sol_to_buy, 1), round(pnl, 2), position])
         elif signal == 'short' and position == 'long' and entry_amount > 0 and sol_balance > MIN_TRADE_SIZE:
             print(Fore.YELLOW + Style.BRIGHT + "[SWITCH] Signal changed: closing long, opening short." + Style.RESET_ALL)
-            # Печатаем закрытие long позиции как trade
+            # Log the closing of a long position as a trade
             usdc_received = entry_amount * current_price
             print(f"{Fore.RED}[TRADE] Selling {entry_amount:.4f} SOL for {usdc_received:.2f} USDC at {current_price:.2f}{Style.RESET_ALL}")
             result = execute_trade(SOL_ADDRESS, USDC_ADDRESS, entry_amount, reason="signal switch")
@@ -346,7 +346,7 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                 state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'sell', round(current_price, 2), round(amount, 1), round(pnl, 2), position])
         elif signal == 'long' and position == 'short' and entry_amount > 0 and usdc_balance > 1:
             print(Fore.YELLOW + Style.BRIGHT + "[SWITCH] Signal changed: closing short, opening long." + Style.RESET_ALL)
-            # Печатаем закрытие short позиции как trade
+            # Log the closing of a short position as a trade
             sol_to_buy = entry_amount
             usdc_needed = sol_to_buy * current_price
             print(f"{Fore.GREEN}[TRADE] Buying {sol_to_buy:.4f} SOL with {usdc_needed:.2f} USDC at {current_price:.2f}{Style.RESET_ALL}")
@@ -391,7 +391,7 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                 print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {total_usdc:.2f} USDC" + Style.RESET_ALL)
                 state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'sell', round(current_price, 2), round(amount, 1), round(pnl, 2), position])
     elif position == 'long':
-        # Проверяем, что позиция открыта и entry_price не None перед арифметикой
+        # Check that the position is open and entry_price is not None before arithmetic
         if entry_price is not None and current_price <= entry_price * (1 - STOP_LOSS_PCT) and entry_amount > 0:
             print(Fore.MAGENTA + "[EXIT] Stop-loss triggered: closing long position." + Style.RESET_ALL)
             result = execute_trade(SOL_ADDRESS, USDC_ADDRESS, entry_amount, reason="stop-loss")
@@ -402,7 +402,7 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                 realized_pnl += pnl
                 log_trade('sell', current_price, entry_amount, pnl, 'flat')
                 position = 'flat'
-                entry_price = None  # Сбрасываем только после полного выхода
+                entry_price = None  # Reset only after a full exit
                 entry_amount = 0
                 #print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {(usdc_balance + sol_balance * current_price):.2f} USDC" + Style.RESET_ALL)
                 time.sleep(2)
@@ -421,7 +421,7 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                 realized_pnl += pnl
                 log_trade('sell', current_price, entry_amount, pnl, 'flat')
                 position = 'flat'
-                entry_price = None  # Сбрасываем только после полного выхода
+                entry_price = None  # Reset only after a full exit
                 entry_amount = 0
                 #print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {(usdc_balance + sol_balance * current_price):.2f} USDC" + Style.RESET_ALL)
                 time.sleep(2)
@@ -431,7 +431,7 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                 print_balance(sol_balance_real, usdc_balance_real, current_price)
                 state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'sell', round(current_price, 2), round(entry_amount, 1), round(pnl, 2), position])
     elif position == 'short':
-        # Проверяем, что позиция открыта и entry_price не None перед арифметикой
+        # Check that the position is open and entry_price is not None before arithmetic
         if entry_price is not None and current_price >= entry_price * (1 + STOP_LOSS_PCT) and entry_amount > 0:
             print(Fore.MAGENTA + "[EXIT] Stop-loss triggered: closing short position." + Style.RESET_ALL)
             usdc_needed = entry_amount * current_price
@@ -442,7 +442,7 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                 realized_pnl += pnl
                 log_trade('buy', current_price, entry_amount, pnl, 'flat')
                 position = 'flat'
-                entry_price = None  # Сбрасываем только после полного выхода
+                entry_price = None  # Reset only after a full exit
                 entry_amount = 0
                 #print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {(usdc_balance + sol_balance * current_price):.2f} USDC" + Style.RESET_ALL)
                 time.sleep(2)
@@ -461,7 +461,7 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                 realized_pnl += pnl
                 log_trade('buy', current_price, entry_amount, pnl, 'flat')
                 position = 'flat'
-                entry_price = None  # Сбрасываем только после полного выхода
+                entry_price = None  # Reset only after a full exit
                 entry_amount = 0
                 #print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {(usdc_balance + sol_balance * current_price):.2f} USDC" + Style.RESET_ALL)
                 time.sleep(2)
@@ -516,7 +516,7 @@ def naive_mae(y):
         return 0.0
     return np.mean(np.abs(y[1:] - y[:-1]))
 
-# Для ручного анализа можно импортировать:
+# For manual analysis you can import:
 # from indicator_analysis import permutation_importance
 
 def parse_covariate_names(llm_response, all_covariates):
