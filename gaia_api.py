@@ -1,10 +1,9 @@
 import os
 import requests
 from io_api import io_fallback
-from config import SENSITIVITY, STOP_LOSS_PCT, TAKE_PROFIT_PCT
+from config import SENSITIVITY, STOP_LOSS_PCT, TAKE_PROFIT_PCT, TRADE_PERIOD_MINUTES, METRIC_WINDOW_MINUTES, GAIA_API_URL
 
 GAIA_API_KEY = os.getenv("GAIA_API_KEY")
-GAIA_API_URL = "https://llama3b.gaia.domains/v1/chat/completions"
 
 def gaia_select_indicators(ohlcv, indicators, all_covariates, trade_history=None):
     prompt = (
@@ -19,6 +18,7 @@ def gaia_select_indicators(ohlcv, indicators, all_covariates, trade_history=None
         "- DO NOT add any explanation, description, or extra text.\n"
         "- Example of correct response: rsi_14, macd, adx_14\n"
         "- Example of incorrect response: 'The most important indicators are rsi_14, macd, adx_14 because...'\n"
+        "- If there have been few or no trades recently, consider lowering the sensitivity to increase trading frequency.\n"
         "Your answer:"
     )
     payload = {
@@ -40,10 +40,10 @@ def gaia_select_indicators(ohlcv, indicators, all_covariates, trade_history=None
         return (selected[:3] if len(selected) >= 3 else all_covariates[:3], 'gaia')
     except requests.exceptions.HTTPError as e:
             print(f"[GAIA] Error: {e}, falling back to IO...")
-            return io_fallback(ohlcv, indicators, all_covariates, trade_history=trade_history)
+            return io_fallback(ohlcv, indicators, all_covariates, trade_history=trade_history, TRADE_PERIOD_MINUTES=TRADE_PERIOD_MINUTES, METRIC_WINDOW_MINUTES=METRIC_WINDOW_MINUTES)
     except Exception as e:
         print(f"[GAIA] Unexpected error: {e}, falling back to IO...")
-        return io_fallback(ohlcv, indicators, all_covariates, trade_history=trade_history)
+        return io_fallback(ohlcv, indicators, all_covariates, trade_history=trade_history, TRADE_PERIOD_MINUTES=TRADE_PERIOD_MINUTES, METRIC_WINDOW_MINUTES=METRIC_WINDOW_MINUTES)
 
 def parse_io_result(io_result, all_covariates, default_params):
     if isinstance(io_result, str):
@@ -70,7 +70,7 @@ def gaia_select_indicators_and_params(ohlcv, indicators, all_covariates, volatil
         f"Given the following OHLCV and indicator values, select exactly 3 most important indicators for trading SOL/USDC right now, and recommend SENSITIVITY, STOP_LOSS, TAKE_PROFIT values.\n"
         f"Respond in the following format (no explanations!):\n"
         f"<indicator1>, <indicator2>, <indicator3>, <sensitivity>, <stop_loss>, <take_profit>\n"
-        f"Example: rsi_14, macd, adx_14, 0.001, 0.01, 0.02\n"
+        f"Example: rsi_14, macd, adx_14, 0.0005, 0.01, 0.02\n"
         f"OHLCV: {ohlcv}\n"
         f"Indicators: {indicators}\n"
         f"Available indicators: {', '.join(all_covariates) if all_covariates else ''}\n"
@@ -94,6 +94,7 @@ def gaia_select_indicators_and_params(ohlcv, indicators, all_covariates, volatil
         "\nIMPORTANT:\n"
         "- Respond ONLY in the specified format.\n"
         "- DO NOT add any explanation, description, or extra text.\n"
+        "- If there have been few or no trades recently, consider lowering the sensitivity to increase trading frequency.\n"
         "Your answer:"
     )
     headers = {
@@ -127,7 +128,7 @@ def gaia_select_indicators_and_params(ohlcv, indicators, all_covariates, volatil
     except requests.exceptions.HTTPError as e:
         if hasattr(e.response, 'status_code') and e.response.status_code in (401, 402):
             print("[GAIA] Auth error or payment required. Falling back to IO...")
-            io_result, _ = io_fallback(ohlcv, indicators, all_covariates, volatility, rolling_mae, trade_count, min_sens, max_sens, min_sl, max_sl, min_tp, max_tp, pnl_last_hour, avg_pnl_last_hour, switches_last_hour, max_drawdown_last_hour, TRADE_PERIOD_MINUTES, METRIC_WINDOW_MINUTES, trade_history=trade_history)
+            io_result, _ = io_fallback(ohlcv, indicators, all_covariates, volatility, rolling_mae, trade_count, min_sens, max_sens, min_sl, max_sl, min_tp, max_tp, pnl_last_hour, avg_pnl_last_hour, switches_last_hour, max_drawdown_last_hour, TRADE_PERIOD_MINUTES=TRADE_PERIOD_MINUTES, METRIC_WINDOW_MINUTES=METRIC_WINDOW_MINUTES, trade_history=trade_history)
             if isinstance(io_result, str):
                 parts = [x.strip() for x in io_result.split(',')]
                 inds = [x for x in parts[:3] if x in all_covariates]
@@ -144,7 +145,7 @@ def gaia_select_indicators_and_params(ohlcv, indicators, all_covariates, volatil
                 return all_covariates[:3], [SENSITIVITY, STOP_LOSS_PCT, TAKE_PROFIT_PCT], 'io'
     except Exception as e:
         print(f"[GAIA] Error: {e}, falling back to IO...")
-        io_result, _ = io_fallback(ohlcv, indicators, all_covariates, volatility, rolling_mae, trade_count, min_sens, max_sens, min_sl, max_sl, min_tp, max_tp, pnl_last_hour, avg_pnl_last_hour, switches_last_hour, max_drawdown_last_hour, TRADE_PERIOD_MINUTES, METRIC_WINDOW_MINUTES, trade_history=trade_history)
+        io_result, _ = io_fallback(ohlcv, indicators, all_covariates, volatility, rolling_mae, trade_count, min_sens, max_sens, min_sl, max_sl, min_tp, max_tp, pnl_last_hour, avg_pnl_last_hour, switches_last_hour, max_drawdown_last_hour, TRADE_PERIOD_MINUTES=TRADE_PERIOD_MINUTES, METRIC_WINDOW_MINUTES=METRIC_WINDOW_MINUTES, trade_history=trade_history)
         if isinstance(io_result, str):
             parts = [x.strip() for x in io_result.split(',')]
             inds = [x for x in parts[:3] if x in all_covariates]

@@ -30,7 +30,7 @@ def io_fallback(ohlcv=None, indicators=None, all_covariates=None, volatility=Non
             f"Given the following OHLCV and indicator values, select exactly 3 most important indicators for trading SOL/USDC right now, and recommend SENSITIVITY, STOP_LOSS, TAKE_PROFIT values.\n"
             f"Respond in the following format (no explanations!):\n"
             f"<indicator1>, <indicator2>, <indicator3>, <sensitivity>, <stop_loss>, <take_profit>\n"
-            f"Example: rsi_14, macd, adx_14, 0.001, 0.01, 0.02\n"
+            f"Example (do NOT copy values, use your own based on the data above): rsi_14, macd, adx_14, 0.0005, 0.01, 0.02\n"
             f"OHLCV: {ohlcv}\n"
             f"Indicators: {indicators}\n"
             f"Available indicators: {', '.join(all_covariates) if all_covariates else ''}\n"
@@ -53,6 +53,8 @@ def io_fallback(ohlcv=None, indicators=None, all_covariates=None, volatility=Non
         prompt += (
             "\nIMPORTANT:\n"
             "- Respond ONLY in the specified format.\n"
+            "- DO NOT copy the example values. Use the provided data to select appropriate values.\n"
+            "- If there have been few or no trades recently, consider lowering the sensitivity to increase trading frequency.\n"
             "- DO NOT add any explanation, description, or extra text.\n"
             "Your answer:"
         )

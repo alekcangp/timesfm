@@ -2,20 +2,20 @@
 
 # Trading parameters
 SENSITIVITY = 0.0005  # Default sensitivity for signal threshold
-STOP_LOSS_PCT = 0.01  # Default stop-loss percentage
-TAKE_PROFIT_PCT = 0.02  # Default take-profit percentage
+STOP_LOSS_PCT = 0.005  # Default stop-loss percentage
+TAKE_PROFIT_PCT = 0.01  # Default take-profit percentage
 POSITION_SIZE_PCT = 0.1  # Fraction of balance to use per trade (updated from CONFIG)
 MIN_TRADE_SIZE = 0.01  # Minimum trade size in SOL
 
 # Symbol and data settings
 SYMBOL = 'SOLUSDC'  # Trading pair symbol
-INTERVAL = '3m'  # Candle interval (use string if Client is not imported)
+INTERVAL = '5m'  # Candle interval (use string if Client is not imported)
 LOOKBACK = 100  # Number of candles to look back for indicators
-LOOKAHEAD = 2   # Number of candles to look ahead for some logic
+LOOKAHEAD = 3   # Number of candles to look ahead for some logic
 
 # Time settings
-TRADE_PERIOD_MINUTES = 5  # How often to make trading decisions (updated from CONFIG)
-METRIC_WINDOW_MINUTES = 30  # Window for metrics (PnL, drawdown, etc.)
+TRADE_PERIOD_MINUTES = 10  # How often to make trading decisions (updated from CONFIG)
+METRIC_WINDOW_MINUTES = 60  # Window for metrics (PnL, drawdown, etc.)
 MAX_RUNTIME = 60 * 24  # Max runtime in minutes (from CONFIG)
 
 # Logging
@@ -30,7 +30,7 @@ MIN_TP = 0.01      # Minimum take-profit for LLM prompt
 MAX_TP = 0.05      # Maximum take-profit for LLM prompt
 
 # Prompt/LLM agent settings
-GAIA_API_URL = "https://api.gaia.trading/llm"
+GAIA_API_URL = "https://llama3b.gaia.domains/v1/chat/completions"
 IO_API_URL = "https://api.intelligence.io.solutions/api/v1/workflows/run"
 
 # Recall API settings

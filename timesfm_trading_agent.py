@@ -101,7 +101,7 @@ def fetch_klines(symbol, interval, lookback, max_retries=3, retry_delay=5):
 
 def print_balance(sol_balance, usdc_balance, current_price):
     total_value = usdc_balance + sol_balance * current_price
-    print(f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {total_value:.2f} USDC")
+    print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {total_value:.2f} USDC" + Style.RESET_ALL)
 
 def log_trade(action, price, amount, pnl, position):
     file_exists = os.path.isfile(TRADE_LOG)
@@ -192,6 +192,7 @@ def update_parameters_and_indicators(metrics, ohlcv, indicators, all_covariates,
         min_sens=0.0002, max_sens=0.002, min_sl=0.005, max_sl=0.03, min_tp=0.01, max_tp=0.05,
         pnl_last_hour=metrics['pnl'], avg_pnl_last_hour=metrics['avg_pnl'],
         switches_last_hour=metrics['switches'], max_drawdown_last_hour=metrics['drawdown'],
+        TRADE_PERIOD_MINUTES=TRADE_PERIOD_MINUTES, METRIC_WINDOW_MINUTES=METRIC_WINDOW_MINUTES,
         trade_history=trade_history_str
     )
     SENSITIVITY, STOP_LOSS_PCT, TAKE_PROFIT_PCT = params
@@ -258,7 +259,7 @@ def fetch_and_print_balance(df_full, sol_balance, usdc_balance, current_price):
     print_balance(sol_balance, usdc_balance, current_price)
     return ohlcv, indicators
 
-def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSITIVITY, STOP_LOSS_PCT, TAKE_PROFIT_PCT, position, entry_price, entry_amount, realized_pnl, trades, trade_timestamps, trade_pnls, pnl_history, switch_timestamps, balances, current_price, first_forecast, model_maes, naive_maes, model_accs, model_mae_timestamps, rolling_naive_mae, rolling_acc):
+def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSITIVITY, STOP_LOSS_PCT, TAKE_PROFIT_PCT, position, entry_price, entry_amount, realized_pnl, trades, trade_timestamps, trade_pnls, pnl_history, switch_timestamps, balances, current_price, first_forecast, model_maes, naive_maes, model_accs, model_mae_timestamps, rolling_naive_mae, rolling_acc, state):
     """Run TimesFM forecast and execute trading logic."""
     sol_balance = balances.get(SOL_ADDRESS, 0)
     usdc_balance = balances.get(USDC_ADDRESS, 0)
@@ -403,7 +404,7 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                 position = 'flat'
                 entry_price = None  # Сбрасываем только после полного выхода
                 entry_amount = 0
-                print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {(usdc_balance + sol_balance * current_price):.2f} USDC" + Style.RESET_ALL)
+                #print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {(usdc_balance + sol_balance * current_price):.2f} USDC" + Style.RESET_ALL)
                 time.sleep(2)
                 balances = fetch_all_balances()
                 sol_balance_real = balances.get(SOL_ADDRESS, 0)
@@ -422,7 +423,7 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                 position = 'flat'
                 entry_price = None  # Сбрасываем только после полного выхода
                 entry_amount = 0
-                print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {(usdc_balance + sol_balance * current_price):.2f} USDC" + Style.RESET_ALL)
+                #print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {(usdc_balance + sol_balance * current_price):.2f} USDC" + Style.RESET_ALL)
                 time.sleep(2)
                 balances = fetch_all_balances()
                 sol_balance_real = balances.get(SOL_ADDRESS, 0)
@@ -443,7 +444,7 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                 position = 'flat'
                 entry_price = None  # Сбрасываем только после полного выхода
                 entry_amount = 0
-                print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {(usdc_balance + sol_balance * current_price):.2f} USDC" + Style.RESET_ALL)
+                #print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {(usdc_balance + sol_balance * current_price):.2f} USDC" + Style.RESET_ALL)
                 time.sleep(2)
                 balances = fetch_all_balances()
                 sol_balance_real = balances.get(SOL_ADDRESS, 0)
@@ -462,7 +463,7 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                 position = 'flat'
                 entry_price = None  # Сбрасываем только после полного выхода
                 entry_amount = 0
-                print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {(usdc_balance + sol_balance * current_price):.2f} USDC" + Style.RESET_ALL)
+                #print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {(usdc_balance + sol_balance * current_price):.2f} USDC" + Style.RESET_ALL)
                 time.sleep(2)
                 balances = fetch_all_balances()
                 sol_balance_real = balances.get(SOL_ADDRESS, 0)
@@ -479,7 +480,7 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
         pnl_str = f"{realized_pnl:.2f}"
     print(f"[PNL] Realized PnL: {pnl_str} USDC | Trades: {trades}")
     print(Fore.BLUE + Style.BRIGHT + "========== END OF TRADE ==========" + Style.RESET_ALL)
-    return position, entry_price, entry_amount, realized_pnl, trades, trade_timestamps, trade_pnls, pnl_history, switch_timestamps, sol_balance, usdc_balance, first_forecast, model_maes, naive_maes, model_accs, model_mae_timestamps, rolling_naive_mae, rolling_acc
+    return position, entry_price, entry_amount, realized_pnl, trades, trade_timestamps, trade_pnls, pnl_history, switch_timestamps, sol_balance, usdc_balance, first_forecast, model_maes, naive_maes, model_accs, model_mae_timestamps, rolling_naive_mae, rolling_acc, state
 
 def print_pnl_and_stats(model_maes, naive_maes, model_accs, realized_pnl, trades, elapsed_minutes=None):
     """Print PnL and trading statistics."""
@@ -545,13 +546,13 @@ def parse_covariates_and_params(llm_response, all_covariates):
     try:
         params = [float(x) for x in parts[3:6]]
     except Exception:
-        params = [0.001, 0.01, 0.02]
+        params = [0.0005, 0.01, 0.02]
     if len(inds) != 3:
         print(f"[LLM PARSE WARNING] Could not extract 3 valid indicators from LLM response: {llm_response}")
         inds = all_covariates[:3]
     if len(params) != 3:
         print(f"[LLM PARSE WARNING] Could not extract 3 valid params from LLM response: {llm_response}")
-        params = [0.001, 0.01, 0.02]
+        params = [0.0005, 0.01, 0.02]
     return inds, params
 
 def init_state(optimal_covariates):
@@ -614,18 +615,26 @@ def main():
     max_total_value = initial_total_value
     while (datetime.now() - start_time).total_seconds() < MAX_RUNTIME * 60:
         # --- Drawdown check ---
-        balances = fetch_all_balances()
-        sol_balance = balances.get(SOL_ADDRESS, 0)
-        usdc_balance = balances.get(USDC_ADDRESS, 0)
-        df_tmp = fetch_klines(SYMBOL, INTERVAL, max(LOOKBACK, 20))
-        current_price = df_tmp['close'].iloc[-1]
-        total_value = usdc_balance + sol_balance * current_price
-        if total_value > max_total_value:
-            max_total_value = total_value
-        drawdown_pct = (max_total_value - total_value) / max_total_value if max_total_value > 0 else 0
-        if drawdown_pct >= MAX_DRAWDOWN_PCT:
-            print(Fore.RED + Style.BRIGHT + f"[STOP] Max drawdown reached: {drawdown_pct*100:.2f}% (limit: {MAX_DRAWDOWN_PCT*100:.2f}%). Trading stopped." + Style.RESET_ALL)
-            break
+        try:
+            balances = fetch_all_balances()
+            sol_balance = balances.get(SOL_ADDRESS, 0)
+            usdc_balance = balances.get(USDC_ADDRESS, 0)
+            df_tmp = fetch_klines(SYMBOL, INTERVAL, max(LOOKBACK, 20))
+            current_price = df_tmp['close'].iloc[-1]
+            total_value = usdc_balance + sol_balance * current_price
+        except Exception as e:
+            print(f"[ERROR] Failed to fetch balances or price: {e}. Skipping drawdown check this iteration.")
+            time.sleep(TRADE_PERIOD_MINUTES * 60)
+            continue
+        if total_value > 0:
+            if total_value > max_total_value:
+                max_total_value = total_value
+            drawdown_pct = (max_total_value - total_value) / max_total_value if max_total_value > 0 else 0
+            if drawdown_pct >= MAX_DRAWDOWN_PCT:
+                print(Fore.RED + Style.BRIGHT + f"[STOP] Max drawdown reached: {drawdown_pct*100:.2f}% (limit: {MAX_DRAWDOWN_PCT*100:.2f}%). Trading stopped." + Style.RESET_ALL)
+                break
+        else:
+            print("[WARNING] total_value is zero, skipping drawdown check this iteration.")
         # --- Update indicators and parameters every METRIC_WINDOW_MINUTES ---
         if (datetime.now() - state['last_gaia_update']).total_seconds() >= METRIC_WINDOW_MINUTES * 60:
             df_full = fetch_klines(SYMBOL, INTERVAL, LOOKBACK + 50)
@@ -660,12 +669,12 @@ def main():
         (state['position'], state['entry_price'], state['entry_amount'], state['realized_pnl'], state['trades'],
          state['trade_timestamps'], state['trade_pnls'], state['pnl_history'], state['switch_timestamps'],
          sol_balance, usdc_balance, state['first_forecast'], state['model_maes'], state['naive_maes'],
-         state['model_accs'], state['model_mae_timestamps'], state['rolling_naive_mae'], state['rolling_acc']) = run_forecast_and_trade(
+         state['model_accs'], state['model_mae_timestamps'], state['rolling_naive_mae'], state['rolling_acc'], state) = run_forecast_and_trade(
             df, LOOKBACK, LOOKAHEAD, state['covariate_names'], tfm, SENSITIVITY, STOP_LOSS_PCT, TAKE_PROFIT_PCT,
             state['position'], state['entry_price'], state['entry_amount'], state['realized_pnl'], state['trades'],
             state['trade_timestamps'], state['trade_pnls'], state['pnl_history'], state['switch_timestamps'],
             balances, current_price, state['first_forecast'], state['model_maes'], state['naive_maes'],
-            state['model_accs'], state['model_mae_timestamps'], state['rolling_naive_mae'], state['rolling_acc']
+            state['model_accs'], state['model_mae_timestamps'], state['rolling_naive_mae'], state['rolling_acc'], state
         )
         time.sleep(TRADE_PERIOD_MINUTES * 60)
 
