@@ -1,0 +1,14 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+venv/
+venv311/
+
+# Trade logs and sensitive files
+trade_log.csv
+.env
+
+# Ignore indicator analysis outputs
+indicator_analysis.* 

@@ -1,0 +1,10 @@
+python-binance
+pandas
+numpy
+scikit-learn
+requests
+python-dotenv
+cryptography
+aiohttp
+ta
+colorama 
