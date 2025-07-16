@@ -297,65 +297,22 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
     print(Fore.BLUE + Style.BRIGHT + "\n========== NEW TRADE ==========" + Style.RESET_ALL)
     print(f"[SIGNAL] {signal.upper()} at {current_price} (Forecast: {next_price:.2f})")
     pnl = 0
+    # Debug print for state before trade logic
+    print(f"[DEBUG] Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {sol_balance}, USDC: {usdc_balance}")
     # Hybrid logic:
+    # 1. Entry logic if flat
     if position == 'flat':
         if signal == 'long' and usdc_balance > 1:
             sol_to_buy = max(MIN_TRADE_SIZE, usdc_balance * POSITION_SIZE_PCT / current_price)
             usdc_needed = sol_to_buy * current_price
             result = execute_trade(USDC_ADDRESS, SOL_ADDRESS, usdc_needed, reason="long entry")
+            if not result.get('success'):
+                print(Fore.RED + f"[ERROR] Failed to execute long entry trade: {result.get('error', 'Unknown error')}" + Style.RESET_ALL)
             if result.get('success'):
                 print(f"{Fore.GREEN}[TRADE] Buying {sol_to_buy:.4f} SOL with {usdc_needed:.2f} USDC at {current_price:.2f}{Style.RESET_ALL}")
                 position = 'long'
                 entry_price = current_price
                 entry_amount = sol_to_buy
-                # Always fetch real balances after trade
-                time.sleep(2)
-                balances = fetch_all_balances()
-                sol_balance = balances.get(SOL_ADDRESS, 0)
-                usdc_balance = balances.get(USDC_ADDRESS, 0)
-                log_trade('buy', current_price, sol_to_buy, pnl, position)
-                trades += 1
-                trade_timestamps.append(datetime.now())
-                trade_pnls.append(pnl)
-                pnl_history.append(realized_pnl)
-                total_usdc = usdc_balance + sol_balance * current_price
-                print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {total_usdc:.2f} USDC" + Style.RESET_ALL)
-                state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'buy', round(current_price, 2), round(sol_to_buy, 1), round(pnl, 2), position])
-        elif signal == 'short' and position == 'long' and entry_amount > 0 and sol_balance > MIN_TRADE_SIZE:
-            print(Fore.YELLOW + Style.BRIGHT + "[SWITCH] Signal changed: closing long, opening short." + Style.RESET_ALL)
-            # Log the closing of a long position as a trade
-            usdc_received = entry_amount * current_price
-            print(f"{Fore.RED}[TRADE] Selling {entry_amount:.4f} SOL for {usdc_received:.2f} USDC at {current_price:.2f}{Style.RESET_ALL}")
-            result = execute_trade(SOL_ADDRESS, USDC_ADDRESS, entry_amount, reason="signal switch")
-            if result.get('success'):
-                position = 'short'
-                entry_price = current_price
-                entry_amount = amount
-                # Always fetch real balances after trade
-                time.sleep(2)
-                balances = fetch_all_balances()
-                sol_balance = balances.get(SOL_ADDRESS, 0)
-                usdc_balance = balances.get(USDC_ADDRESS, 0)
-                log_trade('sell', current_price, amount, pnl, position)
-                trades += 1
-                trade_timestamps.append(datetime.now())
-                trade_pnls.append(pnl)
-                pnl_history.append(realized_pnl)
-                total_usdc = usdc_balance + sol_balance * current_price
-                print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {total_usdc:.2f} USDC" + Style.RESET_ALL)
-                state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'sell', round(current_price, 2), round(amount, 1), round(pnl, 2), position])
-        elif signal == 'long' and position == 'short' and entry_amount > 0 and usdc_balance > 1:
-            print(Fore.YELLOW + Style.BRIGHT + "[SWITCH] Signal changed: closing short, opening long." + Style.RESET_ALL)
-            # Log the closing of a short position as a trade
-            sol_to_buy = entry_amount
-            usdc_needed = sol_to_buy * current_price
-            print(f"{Fore.GREEN}[TRADE] Buying {sol_to_buy:.4f} SOL with {usdc_needed:.2f} USDC at {current_price:.2f}{Style.RESET_ALL}")
-            result = execute_trade(USDC_ADDRESS, SOL_ADDRESS, usdc_needed, reason="signal switch")
-            if result.get('success'):
-                position = 'long'
-                entry_price = current_price
-                entry_amount = sol_to_buy
-                # Always fetch real balances after trade
                 time.sleep(2)
                 balances = fetch_all_balances()
                 sol_balance = balances.get(SOL_ADDRESS, 0)
@@ -369,15 +326,17 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                 print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {total_usdc:.2f} USDC" + Style.RESET_ALL)
                 state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'buy', round(current_price, 2), round(sol_to_buy, 1), round(pnl, 2), position])
         elif signal == 'short' and sol_balance > MIN_TRADE_SIZE:
+            print(f"[DEBUG] (Entry) Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {sol_balance}, USDC: {usdc_balance}")
             amount = max(MIN_TRADE_SIZE, sol_balance * POSITION_SIZE_PCT)
             result = execute_trade(SOL_ADDRESS, USDC_ADDRESS, amount, reason="short entry")
+            if not result.get('success'):
+                print(Fore.RED + f"[ERROR] Failed to execute short entry trade: {result.get('error', 'Unknown error')}" + Style.RESET_ALL)
             if result.get('success'):
                 usdc_received = amount * current_price
                 print(f"{Fore.RED}[TRADE] Selling {amount:.4f} SOL for {usdc_received:.2f} USDC at {current_price:.2f}{Style.RESET_ALL}")
                 position = 'short'
                 entry_price = current_price
                 entry_amount = amount
-                # Always fetch real balances after trade
                 time.sleep(2)
                 balances = fetch_all_balances()
                 sol_balance = balances.get(SOL_ADDRESS, 0)
@@ -390,11 +349,93 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                 total_usdc = usdc_balance + sol_balance * current_price
                 print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {total_usdc:.2f} USDC" + Style.RESET_ALL)
                 state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'sell', round(current_price, 2), round(amount, 1), round(pnl, 2), position])
+
+    # 2. Switch logic: long→short, short→long
+    elif position == 'long' and signal == 'short' and entry_amount > 0 and sol_balance > MIN_TRADE_SIZE:
+        print(f"[DEBUG] (Switch) Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {sol_balance}, USDC: {usdc_balance}")
+        print(Fore.YELLOW + Style.BRIGHT + "[SWITCH] Signal changed: closing long, opening short." + Style.RESET_ALL)
+        usdc_received = entry_amount * current_price
+        print(f"{Fore.RED}[TRADE] Selling {entry_amount:.4f} SOL for {usdc_received:.2f} USDC at {current_price:.2f}{Style.RESET_ALL}")
+        result = execute_trade(SOL_ADDRESS, USDC_ADDRESS, entry_amount, reason="signal switch")
+        if not result.get('success'):
+            print(Fore.RED + f"[ERROR] Failed to execute switch (long to short): {result.get('error', 'Unknown error')}" + Style.RESET_ALL)
+        if result.get('success'):
+            # Calculate and log PnL for closing long
+            pnl = (current_price - entry_price) * entry_amount
+            realized_pnl += pnl
+            log_trade('sell', current_price, entry_amount, pnl, 'flat')
+            trades += 1
+            trade_timestamps.append(datetime.now())
+            trade_pnls.append(pnl)
+            pnl_history.append(realized_pnl)
+            state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'sell', round(current_price, 2), round(entry_amount, 1), round(pnl, 2), 'flat'])
+            # After closing long, open short
+            amount = max(MIN_TRADE_SIZE, sol_balance * POSITION_SIZE_PCT)
+            result2 = execute_trade(SOL_ADDRESS, USDC_ADDRESS, amount, reason="short entry after switch")
+            if not result2.get('success'):
+                print(Fore.RED + f"[ERROR] Failed to open short after switch: {result2.get('error', 'Unknown error')}" + Style.RESET_ALL)
+            if result2.get('success'):
+                usdc_received2 = amount * current_price
+                print(f"{Fore.RED}[TRADE] Selling {amount:.4f} SOL for {usdc_received2:.2f} USDC at {current_price:.2f} (after switch){Style.RESET_ALL}")
+                position = 'short'
+                entry_price = current_price
+                entry_amount = amount
+                time.sleep(2)
+                balances = fetch_all_balances()
+                sol_balance = balances.get(SOL_ADDRESS, 0)
+                usdc_balance = balances.get(USDC_ADDRESS, 0)
+                log_trade('sell', current_price, amount, 0, position)
+                state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'sell', round(current_price, 2), round(amount, 1), 0.00, position])
+                total_usdc = usdc_balance + sol_balance * current_price
+                print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {total_usdc:.2f} USDC" + Style.RESET_ALL)
+    elif position == 'short' and signal == 'long' and entry_amount > 0 and usdc_balance > 1:
+        print(f"[DEBUG] (Switch) Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {sol_balance}, USDC: {usdc_balance}")
+        print(Fore.YELLOW + Style.BRIGHT + "[SWITCH] Signal changed: closing short, opening long." + Style.RESET_ALL)
+        sol_to_buy = entry_amount
+        usdc_needed = sol_to_buy * current_price
+        print(f"{Fore.GREEN}[TRADE] Buying {sol_to_buy:.4f} SOL with {usdc_needed:.2f} USDC at {current_price:.2f}{Style.RESET_ALL}")
+        result = execute_trade(USDC_ADDRESS, SOL_ADDRESS, usdc_needed, reason="signal switch")
+        if not result.get('success'):
+            print(Fore.RED + f"[ERROR] Failed to execute switch (short to long): {result.get('error', 'Unknown error')}" + Style.RESET_ALL)
+        if result.get('success'):
+            # Calculate and log PnL for closing short
+            pnl = (entry_price - current_price) * entry_amount
+            realized_pnl += pnl
+            log_trade('buy', current_price, entry_amount, pnl, 'flat')
+            trades += 1
+            trade_timestamps.append(datetime.now())
+            trade_pnls.append(pnl)
+            pnl_history.append(realized_pnl)
+            state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'buy', round(current_price, 2), round(entry_amount, 1), round(pnl, 2), 'flat'])
+            # After closing short, open long
+            sol_to_buy2 = max(MIN_TRADE_SIZE, usdc_balance * POSITION_SIZE_PCT / current_price)
+            usdc_needed2 = sol_to_buy2 * current_price
+            result2 = execute_trade(USDC_ADDRESS, SOL_ADDRESS, usdc_needed2, reason="long entry after switch")
+            if not result2.get('success'):
+                print(Fore.RED + f"[ERROR] Failed to open long after switch: {result2.get('error', 'Unknown error')}" + Style.RESET_ALL)
+            if result2.get('success'):
+                print(f"{Fore.GREEN}[TRADE] Buying {sol_to_buy2:.4f} SOL with {usdc_needed2:.2f} USDC at {current_price:.2f} (after switch){Style.RESET_ALL}")
+                position = 'long'
+                entry_price = current_price
+                entry_amount = sol_to_buy2
+                time.sleep(2)
+                balances = fetch_all_balances()
+                sol_balance = balances.get(SOL_ADDRESS, 0)
+                usdc_balance = balances.get(USDC_ADDRESS, 0)
+                log_trade('buy', current_price, sol_to_buy2, 0, position)
+                state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'buy', round(current_price, 2), round(sol_to_buy2, 1), 0.00, position])
+                total_usdc = usdc_balance + sol_balance * current_price
+                print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {total_usdc:.2f} USDC" + Style.RESET_ALL)
+
+    # --- Exit logic ---
     elif position == 'long':
+        print(f"[DEBUG] (Exit) Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {sol_balance}, USDC: {usdc_balance}")
         # Check that the position is open and entry_price is not None before arithmetic
         if entry_price is not None and current_price <= entry_price * (1 - STOP_LOSS_PCT) and entry_amount > 0:
             print(Fore.MAGENTA + "[EXIT] Stop-loss triggered: closing long position." + Style.RESET_ALL)
             result = execute_trade(SOL_ADDRESS, USDC_ADDRESS, entry_amount, reason="stop-loss")
+            if not result.get('success'):
+                print(Fore.RED + f"[ERROR] Failed to execute long stop-loss exit: {result.get('error', 'Unknown error')}" + Style.RESET_ALL)
             if result.get('success'):
                 usdc_received = entry_amount * current_price
                 print(f"{Fore.RED}[TRADE] Selling {entry_amount:.4f} SOL for {usdc_received:.2f} USDC at {current_price:.2f}{Style.RESET_ALL}")
@@ -404,7 +445,6 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                 position = 'flat'
                 entry_price = None  # Reset only after a full exit
                 entry_amount = 0
-                #print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {(usdc_balance + sol_balance * current_price):.2f} USDC" + Style.RESET_ALL)
                 time.sleep(2)
                 balances = fetch_all_balances()
                 sol_balance_real = balances.get(SOL_ADDRESS, 0)
@@ -414,6 +454,8 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
         elif entry_price is not None and current_price >= entry_price * (1 + TAKE_PROFIT_PCT) and entry_amount > 0:
             print(Fore.CYAN + "[EXIT] Take-profit triggered: closing long position." + Style.RESET_ALL)
             result = execute_trade(SOL_ADDRESS, USDC_ADDRESS, entry_amount, reason="take-profit")
+            if not result.get('success'):
+                print(Fore.RED + f"[ERROR] Failed to execute long take-profit exit: {result.get('error', 'Unknown error')}" + Style.RESET_ALL)
             if result.get('success'):
                 usdc_received = entry_amount * current_price
                 print(f"{Fore.RED}[TRADE] Selling {entry_amount:.4f} SOL for {usdc_received:.2f} USDC at {current_price:.2f}{Style.RESET_ALL}")
@@ -423,7 +465,6 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                 position = 'flat'
                 entry_price = None  # Reset only after a full exit
                 entry_amount = 0
-                #print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {(usdc_balance + sol_balance * current_price):.2f} USDC" + Style.RESET_ALL)
                 time.sleep(2)
                 balances = fetch_all_balances()
                 sol_balance_real = balances.get(SOL_ADDRESS, 0)
@@ -431,11 +472,14 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                 print_balance(sol_balance_real, usdc_balance_real, current_price)
                 state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'sell', round(current_price, 2), round(entry_amount, 1), round(pnl, 2), position])
     elif position == 'short':
+        print(f"[DEBUG] (Exit) Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {sol_balance}, USDC: {usdc_balance}")
         # Check that the position is open and entry_price is not None before arithmetic
         if entry_price is not None and current_price >= entry_price * (1 + STOP_LOSS_PCT) and entry_amount > 0:
             print(Fore.MAGENTA + "[EXIT] Stop-loss triggered: closing short position." + Style.RESET_ALL)
             usdc_needed = entry_amount * current_price
             result = execute_trade(USDC_ADDRESS, SOL_ADDRESS, usdc_needed, reason="stop-loss")
+            if not result.get('success'):
+                print(Fore.RED + f"[ERROR] Failed to execute short stop-loss exit: {result.get('error', 'Unknown error')}" + Style.RESET_ALL)
             if result.get('success'):
                 print(f"{Fore.GREEN}[TRADE] Buying {entry_amount:.4f} SOL with {usdc_needed:.2f} USDC at {current_price:.2f}{Style.RESET_ALL}")
                 pnl = (entry_price - current_price) * entry_amount
@@ -444,7 +488,6 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                 position = 'flat'
                 entry_price = None  # Reset only after a full exit
                 entry_amount = 0
-                #print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {(usdc_balance + sol_balance * current_price):.2f} USDC" + Style.RESET_ALL)
                 time.sleep(2)
                 balances = fetch_all_balances()
                 sol_balance_real = balances.get(SOL_ADDRESS, 0)
@@ -455,6 +498,8 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
             print(Fore.CYAN + "[EXIT] Take-profit triggered: closing short position." + Style.RESET_ALL)
             usdc_needed = entry_amount * current_price
             result = execute_trade(USDC_ADDRESS, SOL_ADDRESS, usdc_needed, reason="take-profit")
+            if not result.get('success'):
+                print(Fore.RED + f"[ERROR] Failed to execute short take-profit exit: {result.get('error', 'Unknown error')}" + Style.RESET_ALL)
             if result.get('success'):
                 print(f"{Fore.GREEN}[TRADE] Buying {entry_amount:.4f} SOL with {usdc_needed:.2f} USDC at {current_price:.2f}{Style.RESET_ALL}")
                 pnl = (entry_price - current_price) * entry_amount
@@ -463,7 +508,48 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                 position = 'flat'
                 entry_price = None  # Reset only after a full exit
                 entry_amount = 0
-                #print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {(usdc_balance + sol_balance * current_price):.2f} USDC" + Style.RESET_ALL)
+                time.sleep(2)
+                balances = fetch_all_balances()
+                sol_balance_real = balances.get(SOL_ADDRESS, 0)
+                usdc_balance_real = balances.get(USDC_ADDRESS, 0)
+                print_balance(sol_balance_real, usdc_balance_real, current_price)
+                state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'buy', round(current_price, 2), round(entry_amount, 1), round(pnl, 2), position])
+
+    # --- Close on HOLD logic ---
+    if signal == 'hold' and position != 'flat' and entry_amount > 0:
+        print(f"[DEBUG] (Close on HOLD) Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {sol_balance}, USDC: {usdc_balance}")
+        if position == 'long':
+            result = execute_trade(SOL_ADDRESS, USDC_ADDRESS, entry_amount, reason="hold exit")
+            if not result.get('success'):
+                print(Fore.RED + f"[ERROR] Failed to close long position on HOLD: {result.get('error', 'Unknown error')}" + Style.RESET_ALL)
+            if result.get('success'):
+                usdc_received = entry_amount * current_price
+                print(f"{Fore.RED}[TRADE] Selling {entry_amount:.4f} SOL for {usdc_received:.2f} USDC at {current_price:.2f} (HOLD exit){Style.RESET_ALL}")
+                pnl = (current_price - entry_price) * entry_amount
+                realized_pnl += pnl
+                log_trade('sell', current_price, entry_amount, pnl, 'flat')
+                position = 'flat'
+                entry_price = None
+                entry_amount = 0
+                time.sleep(2)
+                balances = fetch_all_balances()
+                sol_balance_real = balances.get(SOL_ADDRESS, 0)
+                usdc_balance_real = balances.get(USDC_ADDRESS, 0)
+                print_balance(sol_balance_real, usdc_balance_real, current_price)
+                state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'sell', round(current_price, 2), round(entry_amount, 1), round(pnl, 2), position])
+        elif position == 'short':
+            usdc_needed = entry_amount * current_price
+            result = execute_trade(USDC_ADDRESS, SOL_ADDRESS, usdc_needed, reason="hold exit")
+            if not result.get('success'):
+                print(Fore.RED + f"[ERROR] Failed to close short position on HOLD: {result.get('error', 'Unknown error')}" + Style.RESET_ALL)
+            if result.get('success'):
+                print(f"{Fore.GREEN}[TRADE] Buying {entry_amount:.4f} SOL with {usdc_needed:.2f} USDC at {current_price:.2f} (HOLD exit){Style.RESET_ALL}")
+                pnl = (entry_price - current_price) * entry_amount
+                realized_pnl += pnl
+                log_trade('buy', current_price, entry_amount, pnl, 'flat')
+                position = 'flat'
+                entry_price = None
+                entry_amount = 0
                 time.sleep(2)
                 balances = fetch_all_balances()
                 sol_balance_real = balances.get(SOL_ADDRESS, 0)
