@@ -1,9 +1,9 @@
 # === Trading Bot Global Configuration ===
 
 # Trading parameters
-SENSITIVITY = 0.0005  # Default sensitivity for signal threshold
+SENSITIVITY = 0.001  # Default sensitivity for signal threshold
 STOP_LOSS_PCT = 0.005  # Default stop-loss percentage
-TAKE_PROFIT_PCT = 0.01  # Default take-profit percentage
+TAKE_PROFIT_PCT = 0.02  # Default take-profit percentage
 POSITION_SIZE_PCT = 0.1  # Fraction of balance to use per trade (updated from CONFIG)
 MIN_TRADE_SIZE = 0.01  # Minimum trade size in SOL
 
@@ -11,7 +11,7 @@ MIN_TRADE_SIZE = 0.01  # Minimum trade size in SOL
 SYMBOL = 'SOLUSDC'  # Trading pair symbol
 INTERVAL = '5m'  # Candle interval (use string if Client is not imported)
 LOOKBACK = 100  # Number of candles to look back for indicators
-LOOKAHEAD = 3   # Number of candles to look ahead for some logic
+LOOKAHEAD = 2   # Number of candles to look ahead for some logic
 
 # Time settings
 TRADE_PERIOD_MINUTES = 10  # How often to make trading decisions (updated from CONFIG)

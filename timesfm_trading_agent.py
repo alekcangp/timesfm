@@ -298,7 +298,7 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
     print(f"[SIGNAL] {signal.upper()} at {current_price} (Forecast: {next_price:.2f})")
     pnl = 0
     # Debug print for state before trade logic
-    print(f"[DEBUG] Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {sol_balance}, USDC: {usdc_balance}")
+    # print(f"[DEBUG] Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {sol_balance}, USDC: {usdc_balance}")
     # Hybrid logic:
     # 1. Entry logic if flat
     if position == 'flat':
@@ -326,7 +326,7 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                 print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {total_usdc:.2f} USDC" + Style.RESET_ALL)
                 state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'buy', round(current_price, 2), round(sol_to_buy, 1), round(pnl, 2), position])
         elif signal == 'short' and sol_balance > MIN_TRADE_SIZE:
-            print(f"[DEBUG] (Entry) Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {sol_balance}, USDC: {usdc_balance}")
+            # print(f"[DEBUG] (Entry) Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {sol_balance}, USDC: {usdc_balance}")
             amount = max(MIN_TRADE_SIZE, sol_balance * POSITION_SIZE_PCT)
             result = execute_trade(SOL_ADDRESS, USDC_ADDRESS, amount, reason="short entry")
             if not result.get('success'):
@@ -352,7 +352,7 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
 
     # 2. Switch logic: long→short, short→long
     elif position == 'long' and signal == 'short' and entry_amount > 0 and sol_balance > MIN_TRADE_SIZE:
-        print(f"[DEBUG] (Switch) Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {sol_balance}, USDC: {usdc_balance}")
+        # print(f"[DEBUG] (Switch) Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {sol_balance}, USDC: {usdc_balance}")
         print(Fore.YELLOW + Style.BRIGHT + "[SWITCH] Signal changed: closing long, opening short." + Style.RESET_ALL)
         usdc_received = entry_amount * current_price
         print(f"{Fore.RED}[TRADE] Selling {entry_amount:.4f} SOL for {usdc_received:.2f} USDC at {current_price:.2f}{Style.RESET_ALL}")
@@ -389,7 +389,7 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                 total_usdc = usdc_balance + sol_balance * current_price
                 print(Fore.CYAN + f"[BALANCE] SOL: {sol_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {total_usdc:.2f} USDC" + Style.RESET_ALL)
     elif position == 'short' and signal == 'long' and entry_amount > 0 and usdc_balance > 1:
-        print(f"[DEBUG] (Switch) Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {sol_balance}, USDC: {usdc_balance}")
+        # print(f"[DEBUG] (Switch) Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {sol_balance}, USDC: {usdc_balance}")
         print(Fore.YELLOW + Style.BRIGHT + "[SWITCH] Signal changed: closing short, opening long." + Style.RESET_ALL)
         sol_to_buy = entry_amount
         usdc_needed = sol_to_buy * current_price
@@ -429,7 +429,7 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
 
     # --- Exit logic ---
     elif position == 'long':
-        print(f"[DEBUG] (Exit) Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {sol_balance}, USDC: {usdc_balance}")
+        # print(f"[DEBUG] (Exit) Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {sol_balance}, USDC: {usdc_balance}")
         # Check that the position is open and entry_price is not None before arithmetic
         if entry_price is not None and current_price <= entry_price * (1 - STOP_LOSS_PCT) and entry_amount > 0:
             print(Fore.MAGENTA + "[EXIT] Stop-loss triggered: closing long position." + Style.RESET_ALL)
@@ -472,7 +472,7 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                 print_balance(sol_balance_real, usdc_balance_real, current_price)
                 state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'sell', round(current_price, 2), round(entry_amount, 1), round(pnl, 2), position])
     elif position == 'short':
-        print(f"[DEBUG] (Exit) Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {sol_balance}, USDC: {usdc_balance}")
+        # print(f"[DEBUG] (Exit) Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {sol_balance}, USDC: {usdc_balance}")
         # Check that the position is open and entry_price is not None before arithmetic
         if entry_price is not None and current_price >= entry_price * (1 + STOP_LOSS_PCT) and entry_amount > 0:
             print(Fore.MAGENTA + "[EXIT] Stop-loss triggered: closing short position." + Style.RESET_ALL)
@@ -517,7 +517,7 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
 
     # --- Close on HOLD logic ---
     if signal == 'hold' and position != 'flat' and entry_amount > 0:
-        print(f"[DEBUG] (Close on HOLD) Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {sol_balance}, USDC: {usdc_balance}")
+        # print(f"[DEBUG] (Close on HOLD) Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {sol_balance}, USDC: {usdc_balance}")
         if position == 'long':
             result = execute_trade(SOL_ADDRESS, USDC_ADDRESS, entry_amount, reason="hold exit")
             if not result.get('success'):
@@ -569,21 +569,18 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
     return position, entry_price, entry_amount, realized_pnl, trades, trade_timestamps, trade_pnls, pnl_history, switch_timestamps, sol_balance, usdc_balance, first_forecast, model_maes, naive_maes, model_accs, model_mae_timestamps, rolling_naive_mae, rolling_acc, state
 
 def print_pnl_and_stats(model_maes, naive_maes, model_accs, realized_pnl, trades, elapsed_minutes=None):
-    """Print PnL and trading statistics."""
-    if realized_pnl > 0:
-        pnl_str = Fore.GREEN + f"{realized_pnl:.2f}" + Style.RESET_ALL
-    elif realized_pnl < 0:
-        pnl_str = Fore.RED + f"{realized_pnl:.2f}" + Style.RESET_ALL
-    else:
-        pnl_str = f"{realized_pnl:.2f}"
+    """Print PnL and trading statistics with the entire summary line in magenta."""
+    summary_color = Fore.MAGENTA + Style.BRIGHT
+    reset = Style.RESET_ALL
     if elapsed_minutes is not None:
-        print(f"[SUMMARY] {elapsed_minutes:.1f} min trading complete. Realized PnL: {pnl_str} USDC | Total trades: {trades}")
+        print(f"{summary_color}[SUMMARY] {elapsed_minutes:.1f} min trading complete. Realized PnL: {realized_pnl:.2f} USDC | Total trades: {trades}{reset}")
     else:
-        print(f"[SUMMARY] Trading period complete. Realized PnL: {pnl_str} USDC | Total trades: {trades}")
+        print(f"{summary_color}[SUMMARY] Trading period complete. Realized PnL: {realized_pnl:.2f} USDC | Total trades: {trades}{reset}")
+
     if model_maes and naive_maes and model_accs:
-        print(f"[SUMMARY] Avg Model MAE={np.mean(model_maes):.4f}, Avg Naive MAE={np.mean(naive_maes):.4f}, Avg Direction Acc={np.mean(model_accs):.3f}")
+        print(f"{summary_color}[SUMMARY] Avg Model MAE={np.mean(model_maes):.4f}, Avg Naive MAE={np.mean(naive_maes):.4f}, Avg Direction Acc={np.mean(model_accs):.3f}{reset}")
     else:
-        print(f"[SUMMARY] Not enough data for MAE/accuracy stats.")
+        print(f"{summary_color}[SUMMARY] Not enough data for MAE/accuracy stats.{reset}")
 
 def mae(y_true, y_pred):
     if len(y_true) == 0 or len(y_pred) == 0:
