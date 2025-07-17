@@ -7,7 +7,7 @@ GAIA_API_KEY = os.getenv("GAIA_API_KEY")
 
 def gaia_select_indicators(ohlcv, indicators, all_covariates, trade_history=None):
     prompt = (
-        "Given the following OHLCV and indicator values, select exactly 3 most important indicators for trading SOL/USDC right now.\n"
+        "Given the following OHLCV and indicator values, select exactly 3 most important indicators for trading right now.\n"
         "The Trading decision period (in minutes) determines how frequently trading decisions are made and should influence your recommended indicators.\n"
         "Respond with a comma-separated list of exactly 3 indicator names from this list only:\n"
         f"{', '.join(all_covariates)}\n"
@@ -67,8 +67,8 @@ def gaia_select_indicators_and_params(ohlcv, indicators, all_covariates, volatil
     """
     # Build prompt
     prompt = (
-        f"Given the following OHLCV and indicator values, select exactly 3 most important indicators for trading SOL/USDC right now, and recommend SENSITIVITY, STOP_LOSS, TAKE_PROFIT values.\n"
-        f"Respond in the following format (no explanations!):\n"
+         f"Given the following OHLCV, indicator, metrics values and trade history, select exactly 3 most important indicators for trading  right now, and recommend SENSITIVITY, STOP_LOSS, TAKE_PROFIT values.\n"
+            f"Respond in the following format (no explanations!):\n"
         f"<indicator1>, <indicator2>, <indicator3>, <sensitivity>, <stop_loss>, <take_profit>\n"
        # f"Example: rsi_14, macd, adx_14, 0.0005, 0.01, 0.02\n"
         f"OHLCV: {ohlcv}\n"
@@ -91,11 +91,12 @@ def gaia_select_indicators_and_params(ohlcv, indicators, all_covariates, volatil
                    "Each line is: timestamp, action, price, amount, pnl, position.\n"
                    f"{trade_history}\n")
     prompt += (
-        "\nIMPORTANT:\n"
-        "- Respond ONLY in the specified format.\n"
-        "- DO NOT add any explanation, description, or extra text.\n"
-        "- If there have been few or no trades recently, consider lowering the sensitivity to increase trading frequency.\n"
-        "Your answer:"
+         "\nIMPORTANT:\n"
+            "- SENSITIVITY must be between 0.0002 and 0.002.\n"
+            "- STOP_LOSS must be between 0.005 and 0.03.\n"
+            "- TAKE_PROFIT must be between 0.01 and 0.05.\n"
+            "- DO NOT add any explanation, description, or extra text.\n"
+            "Your answer:"
     )
     headers = {
         "Authorization": f"Bearer {GAIA_API_KEY}",

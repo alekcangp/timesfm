@@ -12,7 +12,7 @@ def io_fallback(ohlcv=None, indicators=None, all_covariates=None, volatility=Non
     # 1. Only indicators
     if ohlcv is not None and indicators is not None and all_covariates is not None and volatility is None:
         prompt = (
-            "Given the following OHLCV and indicator values, select exactly 3 most important indicators for trading SOL/USDC right now.\n"
+            "Given the following OHLCV and indicator values, select exactly 3 most important indicators for trading right now.\n"
             "Respond with a comma-separated list of exactly 3 indicator names from this list only:\n"
             f"{', '.join(all_covariates)}\n"
             f"OHLCV: {ohlcv}\nIndicators: {indicators}\n"
@@ -27,7 +27,7 @@ def io_fallback(ohlcv=None, indicators=None, all_covariates=None, volatility=Non
     # 2. Indicators + parameters
     else:
         prompt = (
-            f"Given the following OHLCV and indicator values, select exactly 3 most important indicators for trading SOL/USDC right now, and recommend SENSITIVITY, STOP_LOSS, TAKE_PROFIT values.\n"
+            f"Given the following OHLCV, indicator, metrics values and trade history, select exactly 3 most important indicators for trading  right now, and recommend SENSITIVITY, STOP_LOSS, TAKE_PROFIT values.\n"
             f"Respond in the following format (no explanations!):\n"
             f"<indicator1>, <indicator2>, <indicator3>, <sensitivity>, <stop_loss>, <take_profit>\n"
            # f"Example (do NOT copy values, use your own based on the data above): rsi_14, macd, adx_14, 0.0005, 0.01, 0.02\n"
@@ -52,9 +52,9 @@ def io_fallback(ohlcv=None, indicators=None, all_covariates=None, volatility=Non
                        f"{trade_history}\n")
         prompt += (
             "\nIMPORTANT:\n"
-            "- Respond ONLY in the specified format.\n"
-            "- DO NOT copy the example values. Use the provided data to select appropriate values.\n"
-            "- If there have been few or no trades recently, consider lowering the sensitivity to increase trading frequency.\n"
+            "- SENSITIVITY must be between 0.0002 and 0.002.\n"
+            "- STOP_LOSS must be between 0.005 and 0.03.\n"
+            "- TAKE_PROFIT must be between 0.01 and 0.05.\n"
             "- DO NOT add any explanation, description, or extra text.\n"
             "Your answer:"
         )

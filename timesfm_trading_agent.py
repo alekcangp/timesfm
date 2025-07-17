@@ -300,54 +300,65 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
     # Debug print for state before trade logic
     # print(f"[DEBUG] Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {token_balance}, USDC: {usdc_balance}")
     # Hybrid logic:
-    # 1. Entry logic if flat
     if position == 'flat':
         if signal == 'long' and usdc_balance > 1:
-            sol_to_buy = max(MIN_TRADE_SIZE, usdc_balance * POSITION_SIZE_PCT / current_price)
-            usdc_needed = sol_to_buy * current_price
-            result = execute_trade(USDC_ADDRESS, TOKEN_ADDRESS, usdc_needed, reason="long entry")
-            if not result.get('success'):
-                print(Fore.RED + f"[ERROR] Failed to execute long entry trade: {result.get('error', 'Unknown error')}" + Style.RESET_ALL)
-            if result.get('success'):
-                print(f"{Fore.GREEN}[TRADE] Buying {sol_to_buy:.4f} SOL with {usdc_needed:.2f} USDC at {current_price:.2f}{Style.RESET_ALL}")
-                position = 'long'
-                entry_price = current_price
-                entry_amount = sol_to_buy
-                time.sleep(2)
-                balances = fetch_all_balances()
-                token_balance = balances.get(TOKEN_ADDRESS, 0)
-                usdc_balance = balances.get(USDC_ADDRESS, 0)
-                log_trade('buy', current_price, sol_to_buy, pnl, position)
-                trades += 1
-                trade_timestamps.append(datetime.now())
-                trade_pnls.append(pnl)
-                pnl_history.append(realized_pnl)
-                total_usdc = usdc_balance + token_balance * current_price
-                print(Fore.CYAN + f"[BALANCE] SOL: {token_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {total_usdc:.2f} USDC" + Style.RESET_ALL)
-                state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'buy', round(current_price, 2), round(sol_to_buy, 1), round(pnl, 2), position])
+            if state.get('entry_confirm') == 'long':
+                sol_to_buy = max(MIN_TRADE_SIZE, usdc_balance * POSITION_SIZE_PCT / current_price)
+                usdc_needed = sol_to_buy * current_price
+                result = execute_trade(USDC_ADDRESS, TOKEN_ADDRESS, usdc_needed, reason="long entry")
+                if not result.get('success'):
+                    print(Fore.RED + f"[ERROR] Failed to execute long entry trade: {result.get('error', 'Unknown error')}" + Style.RESET_ALL)
+                if result.get('success'):
+                    print(f"{Fore.GREEN}[TRADE] Buying {sol_to_buy:.4f} SOL with {usdc_needed:.2f} USDC at {current_price:.2f}{Style.RESET_ALL}")
+                    position = 'long'
+                    entry_price = current_price
+                    entry_amount = sol_to_buy
+                    time.sleep(2)
+                    balances = fetch_all_balances()
+                    token_balance = balances.get(TOKEN_ADDRESS, 0)
+                    usdc_balance = balances.get(USDC_ADDRESS, 0)
+                    log_trade('buy', current_price, sol_to_buy, pnl, position)
+                    trades += 1
+                    trade_timestamps.append(datetime.now())
+                    trade_pnls.append(pnl)
+                    pnl_history.append(realized_pnl)
+                    total_usdc = usdc_balance + token_balance * current_price
+                    print(Fore.CYAN + f"[BALANCE] SOL: {token_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {total_usdc:.2f} USDC" + Style.RESET_ALL)
+                    state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'buy', round(current_price, 2), round(sol_to_buy, 1), round(pnl, 2), position])
+                state['entry_confirm'] = None
+            else:
+                state['entry_confirm'] = 'long'
+                return position, entry_price, entry_amount, realized_pnl, trades, trade_timestamps, trade_pnls, pnl_history, switch_timestamps, token_balance, usdc_balance, first_forecast, model_maes, naive_maes, model_accs, model_mae_timestamps, rolling_naive_mae, rolling_acc, state
         elif signal == 'short' and token_balance > MIN_TRADE_SIZE:
-            amount = max(MIN_TRADE_SIZE, token_balance * POSITION_SIZE_PCT)
-            result = execute_trade(TOKEN_ADDRESS, USDC_ADDRESS, amount, reason="short entry")
-            if not result.get('success'):
-                print(Fore.RED + f"[ERROR] Failed to execute short entry trade: {result.get('error', 'Unknown error')}" + Style.RESET_ALL)
-            if result.get('success'):
-                usdc_received = amount * current_price
-                print(f"{Fore.RED}[TRADE] Selling {amount:.4f} SOL for {usdc_received:.2f} USDC at {current_price:.2f}{Style.RESET_ALL}")
-                position = 'short'
-                entry_price = current_price
-                entry_amount = amount
-                time.sleep(2)
-                balances = fetch_all_balances()
-                token_balance = balances.get(TOKEN_ADDRESS, 0)
-                usdc_balance = balances.get(USDC_ADDRESS, 0)
-                log_trade('sell', current_price, amount, pnl, position)
-                trades += 1
-                trade_timestamps.append(datetime.now())
-                trade_pnls.append(pnl)
-                pnl_history.append(realized_pnl)
-                total_usdc = usdc_balance + token_balance * current_price
-                print(Fore.CYAN + f"[BALANCE] SOL: {token_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {total_usdc:.2f} USDC" + Style.RESET_ALL)
-                state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'sell', round(current_price, 2), round(amount, 1), round(pnl, 2), position])
+            if state.get('entry_confirm') == 'short':
+                amount = max(MIN_TRADE_SIZE, token_balance * POSITION_SIZE_PCT)
+                result = execute_trade(TOKEN_ADDRESS, USDC_ADDRESS, amount, reason="short entry")
+                if not result.get('success'):
+                    print(Fore.RED + f"[ERROR] Failed to execute short entry trade: {result.get('error', 'Unknown error')}" + Style.RESET_ALL)
+                if result.get('success'):
+                    usdc_received = amount * current_price
+                    print(f"{Fore.RED}[TRADE] Selling {amount:.4f} SOL for {usdc_received:.2f} USDC at {current_price:.2f}{Style.RESET_ALL}")
+                    position = 'short'
+                    entry_price = current_price
+                    entry_amount = amount
+                    time.sleep(2)
+                    balances = fetch_all_balances()
+                    token_balance = balances.get(TOKEN_ADDRESS, 0)
+                    usdc_balance = balances.get(USDC_ADDRESS, 0)
+                    log_trade('sell', current_price, amount, pnl, position)
+                    trades += 1
+                    trade_timestamps.append(datetime.now())
+                    trade_pnls.append(pnl)
+                    pnl_history.append(realized_pnl)
+                    total_usdc = usdc_balance + token_balance * current_price
+                    print(Fore.CYAN + f"[BALANCE] SOL: {token_balance:.4f}, USDC: {usdc_balance:.2f}, TOTAL: {total_usdc:.2f} USDC" + Style.RESET_ALL)
+                    state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'sell', round(current_price, 2), round(amount, 1), round(pnl, 2), position])
+                state['entry_confirm'] = None
+            else:
+                state['entry_confirm'] = 'short'
+                return position, entry_price, entry_amount, realized_pnl, trades, trade_timestamps, trade_pnls, pnl_history, switch_timestamps, token_balance, usdc_balance, first_forecast, model_maes, naive_maes, model_accs, model_mae_timestamps, rolling_naive_mae, rolling_acc, state
+        else:
+            state['entry_confirm'] = None
 
     # 2. Switch confirmation logic
     elif position == 'long' and signal == 'short' and entry_amount > 0 and token_balance > MIN_TRADE_SIZE:
@@ -686,6 +697,7 @@ def init_state(optimal_covariates):
         trade_log=[],  # In-memory trade log for LLM window
         last_signal=None,  # For switch confirmation
         switch_confirm=None,  # For switch confirmation
+        entry_confirm=None,   # For entry confirmation
     )
     return state
 
