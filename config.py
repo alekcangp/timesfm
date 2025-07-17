@@ -2,20 +2,20 @@
 
 # Trading parameters
 SENSITIVITY = 0.001  # Default sensitivity for signal threshold
-STOP_LOSS_PCT = 0.005  # Default stop-loss percentage
+STOP_LOSS_PCT = 0.01  # Default stop-loss percentage
 TAKE_PROFIT_PCT = 0.02  # Default take-profit percentage
 POSITION_SIZE_PCT = 0.1  # Fraction of balance to use per trade (updated from CONFIG)
 MIN_TRADE_SIZE = 0.01  # Minimum trade size in SOL
 
 # Symbol and data settings
 SYMBOL = 'SOLUSDC'  # Trading pair symbol
-INTERVAL = '5m'  # Candle interval (use string if Client is not imported)
-LOOKBACK = 100  # Number of candles to look back for indicators
-LOOKAHEAD = 2   # Number of candles to look ahead for some logic
+INTERVAL = '1m'  # Candle interval (use string if Client is not imported)
+LOOKBACK = 120  # Number of candles to look back for indicators
+LOOKAHEAD = 5   # Number of candles to look ahead for some logic
 
 # Time settings
-TRADE_PERIOD_MINUTES = 10  # How often to make trading decisions (updated from CONFIG)
-METRIC_WINDOW_MINUTES = 60  # Window for metrics (PnL, drawdown, etc.)
+TRADE_PERIOD_MINUTES = 5  # How often to make trading decisions (updated from CONFIG)
+METRIC_WINDOW_MINUTES = 30  # Window for metrics (PnL, drawdown, etc.)
 MAX_RUNTIME = 60 * 24  # Max runtime in minutes (from CONFIG)
 
 # Logging
@@ -36,9 +36,14 @@ IO_API_URL = "https://api.intelligence.io.solutions/api/v1/workflows/run"
 # Recall API settings
 RECALL_BASE_URL = "https://api.sandbox.competitions.recall.network"
 
-# Token addresses (should be set via environment variables in production)
-SOL_ADDRESS = "So11111111111111111111111111111111111111112"  # Set via os.getenv('SOL_ADDRESS') in code
-USDC_ADDRESS = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"  # Set via os.getenv('USDC_ADDRESS') in code
+# === Token addresses for trading ===
+# Set TOKEN_ADDRESS to your desired token's contract address (e.g., for ERC-20 or SPL tokens)
+# Example for Ethereum mainnet:
+# TOKEN_ADDRESS = "0x..."  # Replace with your token's contract address
+# USDC_ADDRESS = "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"  # USDC on Ethereum
+
+TOKEN_ADDRESS = "So11111111111111111111111111111111111111112"  # <-- Set this!
+USDC_ADDRESS = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"  # <-- Set this!
 
 # Slippage tolerance for trades
 SLIPPAGE_TOLERANCE = "0.2"  # (e.g., 0.2%)

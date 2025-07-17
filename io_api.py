@@ -20,8 +20,8 @@ def io_fallback(ohlcv=None, indicators=None, all_covariates=None, volatility=Non
             "\nIMPORTANT:\n"
             "- Respond ONLY with the indicator names, separated by commas.\n"
             "- DO NOT add any explanation, description, or extra text.\n"
-            "- Example of correct response: rsi_14, macd, adx_14\n"
-            "- Example of incorrect response: 'The most important indicators are rsi_14, macd, adx_14 because...'\n"
+           # "- Example of correct response: rsi_14, macd, adx_14\n"
+           # "- Example of incorrect response: 'The most important indicators are rsi_14, macd, adx_14 because...'\n"
             "Your answer:"
         )
     # 2. Indicators + parameters
@@ -30,7 +30,7 @@ def io_fallback(ohlcv=None, indicators=None, all_covariates=None, volatility=Non
             f"Given the following OHLCV and indicator values, select exactly 3 most important indicators for trading SOL/USDC right now, and recommend SENSITIVITY, STOP_LOSS, TAKE_PROFIT values.\n"
             f"Respond in the following format (no explanations!):\n"
             f"<indicator1>, <indicator2>, <indicator3>, <sensitivity>, <stop_loss>, <take_profit>\n"
-            f"Example (do NOT copy values, use your own based on the data above): rsi_14, macd, adx_14, 0.0005, 0.01, 0.02\n"
+           # f"Example (do NOT copy values, use your own based on the data above): rsi_14, macd, adx_14, 0.0005, 0.01, 0.02\n"
             f"OHLCV: {ohlcv}\n"
             f"Indicators: {indicators}\n"
             f"Available indicators: {', '.join(all_covariates) if all_covariates else ''}\n"

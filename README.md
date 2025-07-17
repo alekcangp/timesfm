@@ -2,7 +2,9 @@
 
 ## Overview
 
-This project is an advanced, fully automated crypto trading bot for the SOL/USDC pair. It leverages state-of-the-art forecasting (TimesFM), LLM-based strategy selection (Gaia, IO), and real on-chain trading (Recall API). The agent is designed for robust, adaptive, and transparent operation, with clear logging and strong error handling.
+This project is an LLM-driven crypto trading bot for any token/USDC pair on a single specified network (e.g., Ethereum, Base, Solana, etc.), using TimesFM for forecasting, Gaia/IO LLMs for adaptive parameter selection, and Recall for trade execution and logging. It features robust logging, drawdown protection, and modular configuration.
+
+**Note:** The bot is not cross-chain. You can configure it to trade any token supported by your chosen network by setting `TOKEN_ADDRESS` and `USDC_ADDRESS` in `config.py`.
 
 ---
 
@@ -50,12 +52,18 @@ This project is an advanced, fully automated crypto trading bot for the SOL/USDC
 
 ## Configuration
 
-All global parameters are set in `config.py`, including:
-- Trading parameters (sensitivity, stop-loss, take-profit, position size, min trade size)
-- Time settings (trade period, metric window, max runtime)
-- API URLs
-- Token addresses
-- Slippage tolerance
+Edit `config.py` to set your API keys, trading parameters, and token addresses. The bot can be configured for any token/USDC pair on a single network:
+
+- `TOKEN_ADDRESS` (the token you want to trade, e.g., an ERC-20 or SPL token address)
+- `USDC_ADDRESS` (the USDC contract address for your network)
+- Trading parameters (SENSITIVITY, STOP_LOSS_PCT, etc.)
+- Drawdown protection, logging, and more
+
+**To change the traded token or network:**
+- Set `TOKEN_ADDRESS` and `USDC_ADDRESS` to the correct contract addresses for your chosen network.
+- Ensure your API keys and endpoints are compatible with the selected network.
+
+**The bot does not perform cross-chain trading.** It operates on a single network at a time, as specified in your configuration.
 
 ---
 

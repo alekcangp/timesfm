@@ -1,6 +1,6 @@
 import os
 import requests
-from config import SOL_ADDRESS, USDC_ADDRESS, SLIPPAGE_TOLERANCE
+from config import TOKEN_ADDRESS, USDC_ADDRESS, SLIPPAGE_TOLERANCE
 
 RECALL_API_KEY = os.getenv('RECALL_API_KEY')
 RECALL_BASE_URL = "https://api.sandbox.competitions.recall.network"
@@ -15,7 +15,8 @@ def fetch_all_balances():
         if not data.get('success'):
             print(f"[Recall Balance Error] API call not successful: {data}")
             return {}
-        return {bal['tokenAddress']: float(bal.get('amount', 0)) for bal in data.get('balances', [])}
+        balances = {bal['tokenAddress']: float(bal.get('amount', 0)) for bal in data.get('balances', [])}
+        return balances
     except Exception as e:
         print(f"[Recall Balance Error] {e}")
         return {}
