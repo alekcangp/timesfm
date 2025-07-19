@@ -189,7 +189,7 @@ def update_parameters_and_indicators(metrics, ohlcv, indicators, all_covariates,
     covariate_names, params, param_source = gaia_select_indicators_and_params(
         ohlcv, indicators, all_covariates,
         metrics['volatility'], metrics['rolling_mae'], metrics['trades'],
-        min_sens=0.0002, max_sens=0.002, min_sl=0.005, max_sl=0.03, min_tp=0.01, max_tp=0.05,
+        min_sens=0.0002, max_sens=0.002, min_sl=0.005, max_sl=0.03, max_tp=0.05, min_tp=0.01,
         pnl_last_hour=metrics['pnl'], avg_pnl_last_hour=metrics['avg_pnl'],
         switches_last_hour=metrics['switches'], max_drawdown_last_hour=metrics['drawdown'],
         TRADE_PERIOD_MINUTES=TRADE_PERIOD_MINUTES, METRIC_WINDOW_MINUTES=METRIC_WINDOW_MINUTES,
@@ -418,10 +418,10 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
             result = execute_trade(USDC_ADDRESS, TOKEN_ADDRESS, usdc_needed, reason="signal switch")
             if not result.get('success'):
                 print(Fore.RED + f"[ERROR] Failed to execute switch (short to long): {result.get('error', 'Unknown error')}" + Style.RESET_ALL)
-            if result.get('success'):
-                # Calculate and log PnL for closing short
-                pnl = (entry_price - current_price) * entry_amount
-                realized_pnl += pnl
+                if result.get('success'):
+                    # Calculate and log PnL for closing short
+                    pnl = (entry_price - current_price) * entry_amount
+                    realized_pnl += pnl
                 log_trade('buy', current_price, entry_amount, pnl, 'flat')
                 trades += 1
                 trade_timestamps.append(datetime.now())
@@ -491,11 +491,11 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
             result = execute_trade(TOKEN_ADDRESS, USDC_ADDRESS, entry_amount, reason="take-profit")
             if not result.get('success'):
                 print(Fore.RED + f"[ERROR] Failed to execute long take-profit exit: {result.get('error', 'Unknown error')}" + Style.RESET_ALL)
-            if result.get('success'):
-                usdc_received = entry_amount * current_price
-                print(f"{Fore.RED}[TRADE] Selling {entry_amount:.4f} SOL for {usdc_received:.2f} USDC at {current_price:.2f}{Style.RESET_ALL}")
-                pnl = (current_price - entry_price) * entry_amount
-                realized_pnl += pnl
+                if result.get('success'):
+                    usdc_received = entry_amount * current_price
+                    print(f"{Fore.RED}[TRADE] Selling {entry_amount:.4f} SOL for {usdc_received:.2f} USDC at {current_price:.2f}{Style.RESET_ALL}")
+                    pnl = (current_price - entry_price) * entry_amount
+                    realized_pnl += pnl
                 log_trade('sell', current_price, entry_amount, pnl, 'flat')
                 position = 'flat'
                 entry_price = None  # Reset only after a full exit
@@ -552,45 +552,55 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
 
     # --- Close on HOLD logic ---
     if signal == 'hold' and position != 'flat' and entry_amount > 0:
-        # print(f"[DEBUG] (Close on HOLD) Signal: {signal}, Position: {position}, Entry Amount: {entry_amount}, SOL: {token_balance}, USDC: {usdc_balance}")
-        if position == 'long':
-            result = execute_trade(TOKEN_ADDRESS, USDC_ADDRESS, entry_amount, reason="hold exit")
-            if not result.get('success'):
-                print(Fore.RED + f"[ERROR] Failed to close long position on HOLD: {result.get('error', 'Unknown error')}" + Style.RESET_ALL)
-            if result.get('success'):
-                usdc_received = entry_amount * current_price
-                print(f"{Fore.RED}[TRADE] Selling {entry_amount:.4f} SOL for {usdc_received:.2f} USDC at {current_price:.2f} (HOLD exit){Style.RESET_ALL}")
-                pnl = (current_price - entry_price) * entry_amount
-                realized_pnl += pnl
-                log_trade('sell', current_price, entry_amount, pnl, 'flat')
-                position = 'flat'
-                entry_price = None
-                entry_amount = 0
-                time.sleep(2)
-                balances = fetch_all_balances()
-                token_balance_real = balances.get(TOKEN_ADDRESS, 0)
-                usdc_balance_real = balances.get(USDC_ADDRESS, 0)
-                print_balance(token_balance_real, usdc_balance_real, current_price)
-                state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'sell', round(current_price, 2), round(entry_amount, 1), round(pnl, 2), position])
-        elif position == 'short':
-            usdc_needed = entry_amount * current_price
-            result = execute_trade(USDC_ADDRESS, TOKEN_ADDRESS, usdc_needed, reason="hold exit")
-            if not result.get('success'):
-                print(Fore.RED + f"[ERROR] Failed to close short position on HOLD: {result.get('error', 'Unknown error')}" + Style.RESET_ALL)
-            if result.get('success'):
-                print(f"{Fore.GREEN}[TRADE] Buying {entry_amount:.4f} SOL with {usdc_needed:.2f} USDC at {current_price:.2f} (HOLD exit){Style.RESET_ALL}")
-                pnl = (entry_price - current_price) * entry_amount
-                realized_pnl += pnl
-                log_trade('buy', current_price, entry_amount, pnl, 'flat')
-                position = 'flat'
-                entry_price = None
-                entry_amount = 0
+        if state.get('hold_confirm') == 'hold':
+            # Only close if two consecutive 'hold' signals
+            if position == 'long':
+                result = execute_trade(TOKEN_ADDRESS, USDC_ADDRESS, entry_amount, reason="hold exit")
+                if not result.get('success'):
+                    print(Fore.RED + f"[ERROR] Failed to close long position on HOLD: {result.get('error', 'Unknown error')}" + Style.RESET_ALL)
+                if result.get('success'):
+                    usdc_received = entry_amount * current_price
+                    print(f"{Fore.RED}[TRADE] Selling {entry_amount:.4f} SOL for {usdc_received:.2f} USDC at {current_price:.2f} (HOLD exit){Style.RESET_ALL}")
+                    pnl = (current_price - entry_price) * entry_amount
+                    realized_pnl += pnl
+                    log_trade('sell', current_price, entry_amount, pnl, 'flat')
+                    position = 'flat'
+                    entry_price = None
+                    entry_amount = 0
+                    time.sleep(2)
+                    balances = fetch_all_balances()
+                    token_balance_real = balances.get(TOKEN_ADDRESS, 0)
+                    usdc_balance_real = balances.get(USDC_ADDRESS, 0)
+                    print_balance(token_balance_real, usdc_balance_real, current_price)
+                    state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'sell', round(current_price, 2), round(entry_amount, 1), round(pnl, 2), position])
+            elif position == 'short':
+                usdc_needed = entry_amount * current_price
+                result = execute_trade(USDC_ADDRESS, TOKEN_ADDRESS, usdc_needed, reason="hold exit")
+                if not result.get('success'):
+                    print(Fore.RED + f"[ERROR] Failed to close short position on HOLD: {result.get('error', 'Unknown error')}" + Style.RESET_ALL)
+                if result.get('success'):
+                    print(f"{Fore.GREEN}[TRADE] Buying {entry_amount:.4f} SOL with {usdc_needed:.2f} USDC at {current_price:.2f} (HOLD exit){Style.RESET_ALL}")
+                    pnl = (entry_price - current_price) * entry_amount
+                    realized_pnl += pnl
+                    log_trade('buy', current_price, entry_amount, pnl, 'flat')
+                    position = 'flat'
+                    entry_price = None
+                    entry_amount = 0
                 time.sleep(2)
                 balances = fetch_all_balances()
                 token_balance_real = balances.get(TOKEN_ADDRESS, 0)
                 usdc_balance_real = balances.get(USDC_ADDRESS, 0)
                 print_balance(token_balance_real, usdc_balance_real, current_price)
                 state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'buy', round(current_price, 2), round(entry_amount, 1), round(pnl, 2), position])
+            state['hold_confirm'] = None
+        else:
+            state['hold_confirm'] = 'hold'
+            return position, entry_price, entry_amount, realized_pnl, trades, trade_timestamps, trade_pnls, pnl_history, switch_timestamps, token_balance, usdc_balance, first_forecast, model_maes, naive_maes, model_accs, model_mae_timestamps, rolling_naive_mae, rolling_acc, state
+    else:
+        # Reset hold_confirm if signal changes or not a hold
+        if state.get('hold_confirm') is not None and signal != 'hold':
+            state['hold_confirm'] = None
+    state['last_signal'] = signal
 
     # Always print PnL at the end of trade logic
     if realized_pnl > 0:
@@ -698,6 +708,7 @@ def init_state(optimal_covariates):
         last_signal=None,  # For switch confirmation
         switch_confirm=None,  # For switch confirmation
         entry_confirm=None,   # For entry confirmation
+        hold_confirm=None,    # For hold confirmation
     )
     return state
 
