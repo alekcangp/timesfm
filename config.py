@@ -4,7 +4,7 @@
 SENSITIVITY = 0.001  # Default sensitivity for signal threshold
 STOP_LOSS_PCT = 0.01  # Default stop-loss percentage
 TAKE_PROFIT_PCT = 0.02  # Default take-profit percentage
-POSITION_SIZE_PCT = 0.3  # Fraction of balance to use per trade (updated from CONFIG)
+POSITION_SIZE_PCT = 0.1  # Fraction of balance to use per trade (updated from CONFIG)
 MIN_TRADE_SIZE = 0.01  # Minimum trade size in SOL
 
 # Symbol and data settings
