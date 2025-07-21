@@ -4,11 +4,11 @@
 SENSITIVITY = 0.001  # Default sensitivity for signal threshold
 STOP_LOSS_PCT = 0.01  # Default stop-loss percentage
 TAKE_PROFIT_PCT = 0.02  # Default take-profit percentage
-POSITION_SIZE_PCT = 0.1  # Fraction of balance to use per trade (updated from CONFIG)
+POSITION_SIZE_PCT = 0.3  # Fraction of balance to use per trade (updated from CONFIG)
 MIN_TRADE_SIZE = 0.01  # Minimum trade size in SOL
 
 # Symbol and data settings
-SYMBOL = 'SOLUSDC'  # Trading pair symbol
+SYMBOL = 'SOLUSDT'#'SOLUSDC'  # Trading pair symbol
 INTERVAL = '1m'  # Candle interval (use string if Client is not imported)
 LOOKBACK = 120  # Number of candles to look back for indicators
 LOOKAHEAD = 5   # Number of candles to look ahead for some logic
@@ -42,8 +42,8 @@ RECALL_BASE_URL = "https://api.sandbox.competitions.recall.network"
 # TOKEN_ADDRESS = "0x..."  # Replace with your token's contract address
 # USDC_ADDRESS = "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"  # USDC on Ethereum
 
-TOKEN_ADDRESS = "So11111111111111111111111111111111111111112"  # <-- Set this!
-USDC_ADDRESS = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"  # <-- Set this!
+TOKEN_ADDRESS = "So11111111111111111111111111111111111111112" #"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";# WETH 
+USDC_ADDRESS = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" #"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";# USDC 
 
 # Slippage tolerance for trades
 SLIPPAGE_TOLERANCE = "0.2"  # (e.g., 0.2%)
