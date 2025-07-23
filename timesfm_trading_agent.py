@@ -24,11 +24,11 @@ tfm = timesfm.TimesFm(
     hparams=timesfm.TimesFmHparams(
         backend='torch',
         per_core_batch_size=32,
-        horizon_len=8,
+        horizon_len=128,
         input_patch_len=32,
-        output_patch_len=5,
-        num_layers=5,
-        model_dims=256,
+        output_patch_len=128,
+        num_layers=50,
+        model_dims=1280,
         use_positional_embedding=False,
     ),
     checkpoint=timesfm.TimesFmCheckpoint(
