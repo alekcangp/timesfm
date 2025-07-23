@@ -24,11 +24,11 @@ tfm = timesfm.TimesFm(
     hparams=timesfm.TimesFmHparams(
         backend='torch',
         per_core_batch_size=32,
-        horizon_len=128,
+        horizon_len=8,
         input_patch_len=32,
-        output_patch_len=128,
-        num_layers=50,
-        model_dims=1280,
+        output_patch_len=5,
+        num_layers=5,
+        model_dims=256,
         use_positional_embedding=False,
     ),
     checkpoint=timesfm.TimesFmCheckpoint(
@@ -551,6 +551,7 @@ def run_forecast_and_trade(df, lookback, lookahead, covariate_names, tfm, SENSIT
                     state['trade_log'].append([time.strftime('%Y-%m-%d %H:%M:%S'), 'buy', round(current_price, 2), round(entry_amount, 1), round(pnl, 2), position])
 
     # --- Close on HOLD logic ---
+    print(f"[DEBUG] signal={signal}, hold_confirm={state.get('hold_confirm')}, position={position}, entry_amount={entry_amount}")
     if signal == 'hold' and position != 'flat' and entry_amount > 0:
         if state.get('hold_confirm') == 'hold':
             # Only close if two consecutive 'hold' signals
