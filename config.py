@@ -10,12 +10,12 @@ MIN_TRADE_SIZE = 0.01  # Minimum trade size in SOL
 # Symbol and data settings
 SYMBOL = 'SOLUSDT'#'SOLUSDC'  # Trading pair symbol
 INTERVAL = '1m'  # Candle interval (use string if Client is not imported)
-LOOKBACK = 120  # Number of candles to look back for indicators
-LOOKAHEAD = 5   # Number of candles to look ahead for some logic
+LOOKBACK = 230  # Number of candles to look back for indicators
+LOOKAHEAD = 1   # Number of candles to look ahead for some logic
 
 # Time settings
 TRADE_PERIOD_MINUTES = 5  # How often to make trading decisions (updated from CONFIG)
-METRIC_WINDOW_MINUTES = 30  # Window for metrics (PnL, drawdown, etc.)
+METRIC_WINDOW_MINUTES = 60  # Window for metrics (PnL, drawdown, etc.)
 MAX_RUNTIME = 60 * 24  # Max runtime in minutes (from CONFIG)
 
 # Logging
