@@ -7,4 +7,6 @@ python-dotenv
 cryptography
 aiohttp
 ta
-colorama 
+colorama
+timesfm
+torch
