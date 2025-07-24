@@ -10,3 +10,4 @@ ta
 colorama
 timesfm
 torch
+jax
